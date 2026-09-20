@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>2026教師節-我的主打歌1</title>
+    <title>2026教師節-AI的主打歌1</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap" rel="stylesheet">
     
@@ -49,29 +49,35 @@
             box-shadow: inset 0 4px 15px rgba(0,0,0,0.4);
             border: 1px solid rgba(255,255,255,0.05);
             overflow-y: auto;
-            -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%);
-            mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%);
-            -ms-overflow-style: none;  
-            scrollbar-width: none;  
+            /* 縮小遮罩範圍，讓純文字閱讀更舒適 */
+            -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 5%, black 95%, transparent 100%);
+            mask-image: linear-gradient(to bottom, transparent 0%, black 5%, black 95%, transparent 100%);
+            /* 開啟捲軸支援 (移除隱藏捲軸的屬性) */
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255,255,255,0.2) transparent;
         }
 
+        /* 針對 Webkit 瀏覽器客製化捲軸樣式 */
         .lyrics-wrapper::-webkit-scrollbar { 
-            display: none; 
+            width: 6px; 
+        }
+        .lyrics-wrapper::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .lyrics-wrapper::-webkit-scrollbar-thumb {
+            background-color: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+        }
+        .lyrics-wrapper::-webkit-scrollbar-thumb:hover {
+            background-color: rgba(255, 255, 255, 0.4);
         }
 
         .lyrics-container {
-            padding: 10vh 0; /* 縮小上下間距，因為不需要強制置中 */
+            padding: 20px 0; /* 移除原本為了置中而留下的大量空白，改為正常間距 */
         }
 
         .lyric-line {
             transition: color 0.3s ease, text-shadow 0.3s ease, transform 0.3s ease;
-        }
-
-        /* Active Lyric KTV Glowing Effect */
-        .lyric-line.active {
-            color: #00a8ff; 
-            text-shadow: 0px 0px 12px rgba(0, 168, 255, 0.8), 0px 0px 2px rgba(255, 255, 255, 0.5);
-            transform: scale(1.02); /* Slight pop to emphasize the active line */
         }
 
         /* Progress Bar Styling */
@@ -165,8 +171,7 @@
             "1": {
                 coverUrl: "https://picsum.photos/400/400?random=1", 
                 audioUrl: "方鴻益.mp3",
-                lrc: `
-[Verse 1]
+                lyricsText: `[Verse 1]
 穿著乾淨白T恤 帶著自信微笑
 俐落的短髮 精神無比抖擻
 雙臂胸前一抱 難題全都難不倒
@@ -194,8 +199,7 @@
 最可靠的肩膀 總務的大管家
 謝謝你 鴻益老師
 有你真好！
-
-                `
+`
             }
         };
 
@@ -216,8 +220,6 @@
             const durationTimeEl = document.getElementById('duration-time');
 
             let isAudioLoaded = false;
-            let parsedLyrics = []; 
-            let currentLyricIndex = -1; 
             let hasAttemptedAutoplay = false;
 
             // 輔助函式：時間格式化為 MM:SS
@@ -228,34 +230,16 @@
                 return `${minutes}:${seconds.toString().padStart(2, '0')}`;
             }
 
-            function parseLRC(lrcString) {
-                const lines = lrcString.split('\n');
-                const result = [];
-                const timeReg = /\[(\d{2}):(\d{2})\.(\d{2,3})\]/;
-                
-                for (let line of lines) {
-                    const match = line.match(timeReg);
-                    if (match) {
-                        const min = parseInt(match[1]);
-                        const sec = parseInt(match[2]);
-                        const ms = parseInt(match[3].padEnd(3, '0')); 
-                        const time = min * 60 + sec + ms / 1000;
-                        const text = line.replace(timeReg, '').trim();
-                        if (text) {
-                            result.push({ time: time, text: text });
-                        }
-                    }
-                }
-                return result;
-            }
-
-            function renderLyrics(lyrics) {
+            // 渲染純文字歌詞
+            function renderLyrics(text) {
                 lyricsContainer.innerHTML = ''; 
-                lyrics.forEach((lyric, index) => {
+                const lines = text.split('\n');
+                lines.forEach((line) => {
+                    const trimmedLine = line.trim();
                     const div = document.createElement('div');
-                    div.className = 'lyric-line py-3 px-4 text-base text-gray-500 font-medium min-h-[20px]';
-                    div.id = `lyric-${index}`;
-                    div.innerText = lyric.text;
+                    // 沒有時間高亮了，直接把文字調亮 (text-gray-300)
+                    div.className = 'lyric-line py-2 px-4 text-base text-gray-300 font-medium min-h-[28px]';
+                    div.innerText = trimmedLine;
                     lyricsContainer.appendChild(div);
                 });
             }
@@ -279,11 +263,10 @@
                 cover.src = userData.coverUrl;
                 audio.src = userData.audioUrl;
 
-                if (userData.lrc) {
-                    parsedLyrics = parseLRC(userData.lrc);
-                    renderLyrics(parsedLyrics);
+                if (userData.lyricsText) {
+                    renderLyrics(userData.lyricsText);
                 } else {
-                    lyricsContainer.innerHTML = '<div class="lyric-line text-gray-500 py-3">無歌詞資料</div>';
+                    lyricsContainer.innerHTML = '<div class="lyric-line text-gray-400 py-3">無歌詞資料</div>';
                 }
 
                 cover.onload = () => {
@@ -329,34 +312,12 @@
                 isScrubbing = false;
             });
 
-            // 音樂時間更新邏輯
+            // 音樂時間更新邏輯 (現在只負責更新進度條，不再連動歌詞)
             audio.addEventListener('timeupdate', () => {
                 // 如果使用者沒有在拖曳進度條，自動更新進度條數值
                 if (!isScrubbing) {
                     progressBar.value = audio.currentTime;
                     currentTimeEl.innerText = formatTime(audio.currentTime);
-                }
-
-                if (parsedLyrics.length === 0) return;
-                
-                const currentTime = audio.currentTime;
-                let newIndex = parsedLyrics.findIndex((lyric, index) => {
-                    const nextTime = parsedLyrics[index + 1] ? parsedLyrics[index + 1].time : Infinity;
-                    return currentTime >= lyric.time && currentTime < nextTime;
-                });
-
-                if (newIndex !== -1 && newIndex !== currentLyricIndex) {
-                    if (currentLyricIndex !== -1) {
-                        const oldElement = document.getElementById(`lyric-${currentLyricIndex}`);
-                        if (oldElement) oldElement.classList.remove('active');
-                    }
-                    
-                    const newElement = document.getElementById(`lyric-${newIndex}`);
-                    if (newElement) {
-                        newElement.classList.add('active');
-                        // 自動滾動邏輯已移除，讓使用者自由瀏覽
-                    }
-                    currentLyricIndex = newIndex;
                 }
             });
 
