@@ -1257,18 +1257,27 @@ Always be happy 啦啦啦...
                 });
             }
 
-            function attemptAutoplay() {
+             function attemptAutoplay() {
                 if (hasAttemptedAutoplay) return;
                 hasAttemptedAutoplay = true;
 
-                audio.play().then(() => {
-                    cover.style.animationPlayState = 'running';
-                    statusText.style.display = 'none';
-                }).catch(error => {
-                    console.warn("Autoplay prevented by browser:", error);
-                    statusText.innerText = "請點擊 PLAY 播放";
-                    statusText.style.display = 'block';
-                });
+                let playPromise = audio.play();
+                if (playPromise !== undefined) {
+                    playPromise.then(() => {
+                        cover.style.animationPlayState = 'running';
+                        statusText.style.display = 'none';
+                    }).catch(error => {
+                        console.warn("Autoplay prevented by browser:", error);
+                        // 手機端會觸發這裡，把提示文字變形、變色，引導使用者點擊
+                        statusText.innerText = "⬇️ 點擊下方 PLAY 播放 ⬇️";
+                        statusText.style.color = '#ff5e3a';
+                        statusText.style.fontSize = '16px';
+                        statusText.style.display = 'block';
+                        statusText.style.backgroundColor = 'rgba(0,0,0,0.7)';
+                        statusText.style.padding = '5px 10px';
+                        statusText.style.borderRadius = '8px';
+                    });
+                }
             }
 
             if (mediaDatabase[userId] && mediaDatabase[userId].audioUrl !== "") {
